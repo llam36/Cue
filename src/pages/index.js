@@ -3,90 +3,16 @@ import Image from 'next/image'
 import { Inter } from 'next/font/google'
 import styles from '@/styles/Home.module.css'
 import { useEffect, useState } from 'react'
-import { init, Ditto } from "@dittolive/ditto"
-import { connectDB } from "./api/database"
+import axios from 'axios'
 
 const inter = Inter({ subsets: ['latin'] })
-
-let queueSubscription
-let queueLiveQuery
-let swapRequestsSubscription
-let swapRequestsLiveQuery
-
-let ditto
 
 export default function Home() {
   const [queue, setQueue] = useState()
   const [request, setRequest] = useState()
-  useEffect(() => {
-    async function observeQueueAndSwapRequests() {
-      try {
-        if (ditto == null) {
-          ditto = await connectDB();
-        }
-        let size = 3
-        queueSubscription = await ditto.store.collection('reservations').find(`tableSize == ${size}`).subscribe()
-        queueLiveQuery = await ditto.store.collection('reservations').find(`tableSize == ${size}`).observeLocal((docs, event) => {
-          let res = []
-          Object.values(docs).forEach(doc => {
-            res.push(doc.value)
-          });
-          setQueue(res)
-        })
-
-        let id = "64bbeab700ce2c1d0047cb1c"
-        swapRequestsSubscription = await ditto.store.collection('swapRequests').find(`target == '${id}'`).subscribe()
-        swapRequestsLiveQuery = await ditto.store.collection('swapRequests').find(`target == '${id}'`).observeLocal((docs, event) => {
-          let res = []
-          Object.values(docs).forEach(doc => {
-            res.push(doc.value)
-          });
-          setRequest(res)
-        })
-
-      } catch (err) {
-        console.log(err);
-      }
-
-    }
-
-
-    async function observeQueue() {
-      try {
-        let ditto = await connectDB();
-        let size = 3
-        queueSubscription = await ditto.store.collection('reservations').find(`tableSize == ${size}`).subscribe()
-        queueLiveQuery = await ditto.store.collection('reservations').find(`tableSize == ${size}`).observeLocal((docs, event) => {
-          let res = []
-          Object.values(docs).forEach(doc => {
-            res.push(doc.value)
-          });
-          setQueue(res)
-        })
-      } catch (err) {
-        console.log(err);
-      }
-    }
-
-    async function observeSwapRequests() {
-      try {
-        let ditto = await connectDB();
-        let id = "64bbeab700ce2c1d0047cb1c"
-        swapRequestsSubscription = await ditto.store.collection('swapRequests').find(`target == '${id}'`).subscribe()
-        swapRequestsLiveQuery = await ditto.store.collection('swapRequests').find(`target == '${id}'`).observeLocal((docs, event) => {
-          let res = []
-          Object.values(docs).forEach(doc => {
-            res.push(doc.value)
-          });
-          setRequest(res)
-        })
-      } catch (err) {
-        console.log(err);
-      }
-    }
-    // observeQueue();
-    //observeSwapRequests();
-    observeQueueAndSwapRequests()
+  useEffect(async () => {
+    await axios.post("/api/database/observeQueue", { size: 3 })
+    await axios.post("/api/database/observeSwapRequest", { targetId: "64bbeab700ce2c1d0047cb1c" })
   }, []);
   console.log(queue == null ? [] : queue)
   console.log(request == null ? [] : request)

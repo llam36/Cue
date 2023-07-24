@@ -1,4 +1,3 @@
-import { init, Ditto } from "@dittolive/ditto"
 import { calculatePosition, calculateGoalTime } from "./initialize";
 import { connectDB } from "./database";
 
@@ -6,7 +5,7 @@ import { connectDB } from "./database";
 let ditto
 export default async function handler(req, res) {
     if (ditto == null) {
-        ditto = await connectDB("ditto/signon");
+        ditto = await connectDB();
     }
     let data = req.body
 
@@ -16,7 +15,7 @@ export default async function handler(req, res) {
                 data.position = calculatePosition(data.tableSize)
                 data.goalTime = calculateGoalTime(data.position)
 
-                const docID = await ditto.store.collection('reservations').upsert(data).then(console.log("Upserted"))
+                const docID = await ditto.store.collection('reservations').upsert(data)
 
                 return res.status(200).json({ success: true, message: `Entered customer ${docID} to queue` })
             } catch (e) {

@@ -1,5 +1,3 @@
-import { init, Ditto } from "@dittolive/ditto"
-import { calculatePosition, calculateGoalTime } from "./initialize";
 import { connectDB } from "./database";
 
 
@@ -12,9 +10,6 @@ export default async function handler(req, res) {
     switch (req.method) {
         case 'POST':
             try {
-                data.position = calculatePosition(data.tableSize)
-                data.goalTime = calculateGoalTime(data.position)
-
                 const docID = await ditto.store.collection('reservations').upsert(data)
 
                 return res.status(200).json({ success: true, message: `Entered customer ${docID} to queue` })
