@@ -1,10 +1,24 @@
 import { connectDB } from "./index.js";
+import io from 'socket.io-client'
+
+let socket;
 
 let ditto
 let queueSubscription
 let queueLiveQuery
 
+const socketInitializer = async () => {
+    await fetch('http://localhost:3000/api/socket');
+    socket = io("http://localhost:3001")
+
+    socket.on('connect', () => {
+        console.log('Socket connected for queue observer')
+    })
+}
+
 export default async function handler(req, res) {
+    await socketInitializer()
+
     if (ditto == null) {
         ditto = await connectDB();
     }
@@ -18,6 +32,7 @@ export default async function handler(req, res) {
                     Object.values(docs).forEach(doc => {
                         res.push(doc.value)
                     });
+                    socket.emit("queue-change", res)
                     console.log(`Queue length: ${res.length}`)
                 })
                 return res.status(200).json({ success: true, message: `Started observing queue` })
